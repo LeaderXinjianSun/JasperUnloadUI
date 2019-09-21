@@ -36,6 +36,12 @@ namespace JasperUnloadUI
         public MainWindow()
         {
             InitializeComponent();
+            System.Diagnostics.Process[] myProcesses = System.Diagnostics.Process.GetProcessesByName("JasperUnloadUI");//获取指定的进程名   
+            if (myProcesses.Length > 1) //如果可以获取到知道的进程名则说明已经启动
+            {
+                System.Windows.MessageBox.Show("不允许重复打开软件");
+                System.Windows.Application.Current.Shutdown();
+            }
         }
         #region 功能函数
         void AddMessage(string str)
@@ -393,9 +399,10 @@ namespace JasperUnloadUI
                             }
                             else
                             {
-                                stm = "INSERT INTO BODMSG (SCBODBAR, STATUS) VALUES('" + BordBarcode.Text + "','ON')";
+                                stm = "INSERT INTO BODMSG (SCBODBAR, STATUS) VALUES('" + BordBarcode.Text + "','OFF')";
                                 mysql.executeQuery(stm);
                                 AddMessage("板 " + BordBarcode.Text + " 解绑");
+                                BordBarcode.Text = "";
                             }
                         }
                         else
