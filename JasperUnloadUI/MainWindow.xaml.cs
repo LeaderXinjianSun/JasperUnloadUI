@@ -419,5 +419,18 @@ namespace JasperUnloadUI
                 
             }    
         }
+
+        private void 扫码AClick(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                Scan5.GetBarCode(AddMessage);
+            }
+            catch
+            {
+
+                
+            }
+        }
     }
 }

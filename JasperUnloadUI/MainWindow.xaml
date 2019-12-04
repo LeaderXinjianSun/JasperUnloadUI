@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:JasperUnloadUI"
         mc:Ignorable="d"
-        Title="JasperUnloadUI" Icon="forklift_64px_1224840_easyicon.net.ico"
+        Title="JasperUnloadUI20191204" Icon="forklift_64px_1224840_easyicon.net.ico"
         WindowStartupLocation="CenterScreen" Height="318" Width="600" Loaded="Window_Loaded" Closing="Window_Closing">
     <Window.Resources>
         <ResourceDictionary>
@@ -41,6 +41,8 @@
                 <TextBlock Text="板条码" HorizontalAlignment="Left"></TextBlock>
                 <TextBox Name="BordBarcode" Width="100" HorizontalAlignment="Left"></TextBox>
                 <Button Width="60" Height="30" HorizontalAlignment="Center" Content="解绑" Margin="0,10,0,10" Click="FreeBordBarcodeButtonClick"></Button>
+                <Button Width="60" Height="30" HorizontalAlignment="Center" Content="扫码A" Margin="0,10,0,10" Click="扫码AClick"></Button>
+                
             </StackPanel>
         </Grid>
         
