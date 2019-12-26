@@ -101,35 +101,20 @@ namespace JasperUnloadUI
         {
             if (barcode != "Error")
             {
-                Mysql mysql = new Mysql();
-                if (mysql.Connect())
+                try
                 {
-
-                    string stm = "SELECT * FROM BODMSG WHERE SCBODBAR = '" + barcode + "' ORDER BY SIDATE DESC LIMIT 0,5";
-                    DataSet ds = mysql.Select(stm);
-                    DataTable dt = ds.Tables["table0"];
-                    if (dt.Rows.Count > 0)
+                    Mysql mysql = new Mysql();
+                    if (mysql.Connect())
                     {
-                        if (dt.Rows[0]["STATUS"] == DBNull.Value)
+
+                        string stm = "SELECT * FROM BODMSG WHERE SCBODBAR = '" + barcode + "' ORDER BY SIDATE DESC LIMIT 0,5";
+                        DataSet ds = mysql.Select(stm);
+                        DataTable dt = ds.Tables["table0"];
+                        if (dt.Rows.Count > 0)
                         {
-                            AddMessage("板 " + barcode + " 状态栏位为空");
-                            switch (index)
+                            if (dt.Rows[0]["STATUS"] == DBNull.Value)
                             {
-                                case 0:
-                                    Fx5u.SetM("M2505", true);
-                                    break;
-                                case 1:
-                                    Fx5u.SetM("M2507", true);
-                                    break;
-                                default:
-                                    break;
-                            }                            
-                        }
-                        else
-                        {
-                            if ((string)dt.Rows[0]["STATUS"] == "OFF")
-                            {
-                                AddMessage("板 " + barcode + " 是未测板");
+                                AddMessage("板 " + barcode + " 状态栏位为空");
                                 switch (index)
                                 {
                                     case 0:
@@ -144,75 +129,108 @@ namespace JasperUnloadUI
                             }
                             else
                             {
-                                stm = "INSERT INTO BODMSG (SCBODBAR, STATUS) VALUES('" + barcode + "','OFF')";
-                                AddMessage("板 " + barcode + " 解绑");
-                                mysql.executeQuery(stm);
-
-                                stm = "SELECT * FROM barbind WHERE SCBODBAR = '" + barcode + "' ORDER BY SIDATE DESC LIMIT 0,96";
-                                ds = mysql.Select(stm);
-                                dt = ds.Tables["table0"];
-
-                                if (dt.Rows.Count == 96)
+                                if ((string)dt.Rows[0]["STATUS"] == "OFF")
                                 {
-                                    //string datetimestr = (string)dt.Rows[0]["SIDATE"];
-                                    short[] result = new short[96];
-                                    bool checkrst = true;
-                                    for (int i = 0; i < 96; i++)
+                                    AddMessage("板 " + barcode + " 是未测板");
+                                    switch (index)
                                     {
-                                        DataRow[] drs = dt.Select(string.Format("PCSSER = '{0}'", (BordIndex[i]).ToString()));
-                                        if (drs.Length == 1)
+                                        case 0:
+                                            Fx5u.SetM("M2505", true);
+                                            break;
+                                        case 1:
+                                            Fx5u.SetM("M2507", true);
+                                            break;
+                                        default:
+                                            break;
+                                    }
+                                }
+                                else
+                                {
+                                    stm = "INSERT INTO BODMSG (SCBODBAR, STATUS) VALUES('" + barcode + "','OFF')";
+                                    AddMessage("板 " + barcode + " 解绑");
+                                    mysql.executeQuery(stm);
+
+                                    stm = "SELECT * FROM BARBIND WHERE SCBODBAR = '" + barcode + "' ORDER BY SIDATE DESC LIMIT 0,96";
+                                    ds = mysql.Select(stm);
+                                    dt = ds.Tables["table0"];
+
+                                    if (dt.Rows.Count == 96)
+                                    {
+                                        //string datetimestr = (string)dt.Rows[0]["SIDATE"];
+                                        short[] result = new short[96];
+                                        bool checkrst = true;
+                                        for (int i = 0; i < 96; i++)
                                         {
-                                            try
+                                            DataRow[] drs = dt.Select(string.Format("PCSSER = '{0}'", (BordIndex[i]).ToString()));
+                                            if (drs.Length == 1)
                                             {
-                                                result[i] = short.Parse((string)drs[0]["RESULT"]);
+                                                try
+                                                {
+                                                    result[i] = short.Parse((string)drs[0]["RESULT"]);
+                                                }
+                                                catch (Exception ex)
+                                                {
+                                                    AddMessage(ex.Message);
+                                                    checkrst = false;
+                                                    break;
+                                                }
                                             }
-                                            catch (Exception ex)
+                                            else
                                             {
-                                                AddMessage(ex.Message);
+                                                AddMessage("板 " + barcode + " 序号 " + (BordIndex[i]).ToString() + "索引数 " + drs.Length.ToString());
                                                 checkrst = false;
                                                 break;
                                             }
                                         }
+                                        if (checkrst)
+                                        {
+                                            string str;
+                                            switch (index)
+                                            {
+                                                case 0:
+                                                    Fx5u.WriteMultD("D1000", result);
+                                                    str = "A_BordInfo;";
+                                                    for (int i = 0; i < 96; i++)
+                                                    {
+                                                        str += result[i].ToString() + ";";
+                                                    }
+                                                    str = str.Substring(0, str.Length - 1);
+                                                    AddMessage(str);
+                                                    Fx5u.SetM("M2504", true);
+                                                    break;
+                                                case 1:
+                                                    Fx5u.WriteMultD("D1100", result);
+                                                    str = "B_BordInfo;";
+                                                    for (int i = 0; i < 96; i++)
+                                                    {
+                                                        str += result[i].ToString() + ";";
+                                                    }
+                                                    str = str.Substring(0, str.Length - 1);
+                                                    AddMessage(str);
+                                                    Fx5u.SetM("M2506", true);
+                                                    break;
+                                                default:
+                                                    break;
+                                            }
+                                        }
                                         else
                                         {
-                                            AddMessage("板 " + barcode + " 序号 " + (BordIndex[i]).ToString() + "索引数 " + drs.Length.ToString());
-                                            checkrst = false;
-                                            break;
-                                        }
-                                    }
-                                    if (checkrst)
-                                    {
-                                        string str;
-                                        switch (index)
-                                        {
-                                            case 0:
-                                                Fx5u.WriteMultD("D1000", result);
-                                                str = "A_BordInfo;";
-                                                for (int i = 0; i < 96; i++)
-                                                {
-                                                    str += result[i].ToString() + ";";
-                                                }
-                                                str = str.Substring(0, str.Length - 1);
-                                                AddMessage(str);
-                                                Fx5u.SetM("M2504", true);
-                                                break;
-                                            case 1:
-                                                Fx5u.WriteMultD("D1100", result);
-                                                str = "B_BordInfo;";
-                                                for (int i = 0; i < 96; i++)
-                                                {
-                                                    str += result[i].ToString() + ";";
-                                                }
-                                                str = str.Substring(0, str.Length - 1);
-                                                AddMessage(str);
-                                                Fx5u.SetM("M2506", true);
-                                                break;
-                                            default:
-                                                break;
+                                            switch (index)
+                                            {
+                                                case 0:
+                                                    Fx5u.SetM("M2505", true);
+                                                    break;
+                                                case 1:
+                                                    Fx5u.SetM("M2507", true);
+                                                    break;
+                                                default:
+                                                    break;
+                                            }
                                         }
                                     }
                                     else
                                     {
+                                        AddMessage("板 " + barcode + " 产品信息条目 " + dt.Rows.Count.ToString() + " < 96");
                                         switch (index)
                                         {
                                             case 0:
@@ -226,27 +244,27 @@ namespace JasperUnloadUI
                                         }
                                     }
                                 }
-                                else
-                                {
-                                    AddMessage("板 " + barcode + " 产品信息条目 " + dt.Rows.Count.ToString() + " < 96");
-                                    switch (index)
-                                    {
-                                        case 0:
-                                            Fx5u.SetM("M2505", true);
-                                            break;
-                                        case 1:
-                                            Fx5u.SetM("M2507", true);
-                                            break;
-                                        default:
-                                            break;
-                                    }
-                                }
+                            }
+                        }
+                        else
+                        {
+                            AddMessage("板 " + barcode + " 信息未录入");
+                            switch (index)
+                            {
+                                case 0:
+                                    Fx5u.SetM("M2505", true);
+                                    break;
+                                case 1:
+                                    Fx5u.SetM("M2507", true);
+                                    break;
+                                default:
+                                    break;
                             }
                         }
                     }
                     else
                     {
-                        AddMessage("板 " + barcode + " 信息未录入");
+                        AddMessage("Mysql数据库查询失败");
                         switch (index)
                         {
                             case 0:
@@ -259,23 +277,12 @@ namespace JasperUnloadUI
                                 break;
                         }
                     }
+                    mysql.DisConnect();
                 }
-                else
+                catch (Exception ex)
                 {
-                    AddMessage("Mysql数据库查询失败");
-                    switch (index)
-                    {
-                        case 0:
-                            Fx5u.SetM("M2505", true);
-                            break;
-                        case 1:
-                            Fx5u.SetM("M2507", true);
-                            break;
-                        default:
-                            break;
-                    }
+                    AddMessage(ex.Message);
                 }
-                mysql.DisConnect();
             }
             else
             {
